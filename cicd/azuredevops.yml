@@ -12,7 +12,7 @@ stages:
       - job: Build
         displayName: Build job
         pool:
-          vmImage: ubuntu-18.04
+          vmImage: ubuntu-latest
           demands:
             - java
             - docker
