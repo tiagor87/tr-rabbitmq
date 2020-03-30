@@ -19,7 +19,7 @@ using TRRabbitMQ.Core.Utils;
 using Xunit;
 using ExchangeType = TRRabbitMQ.Core.Models.Enums.ExchangeType;
 
-namespace TRRabbitMQ.Tests.Connections.UnitTests
+namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
 {
     public class BusConnectionTests
     {

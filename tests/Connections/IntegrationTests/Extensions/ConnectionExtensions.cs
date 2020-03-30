@@ -3,9 +3,9 @@ using TRRabbitMQ.Core.Builders;
 using TRRabbitMQ.Core.Connections;
 using TRRabbitMQ.Core.Messages;
 using TRRabbitMQ.Core.Models;
-using TRRabbitMQ.Tests.Utils;
+using TRRabbitMQ.Core.Tests.Utils;
 
-namespace TRRabbitMQ.Tests.Connections.IntegrationTests.Extensions
+namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests.Extensions
 {
     public static class ConnectionExtensions
     {

@@ -9,11 +9,11 @@ using TRRabbitMQ.Core.Messages.Implementations;
 using TRRabbitMQ.Core.Models;
 using TRRabbitMQ.Core.Models.Enums;
 using TRRabbitMQ.Core.Options;
-using TRRabbitMQ.Tests.Connections.IntegrationTests.Extensions;
-using TRRabbitMQ.Tests.Connections.IntegrationTests.Fixtures;
+using TRRabbitMQ.Core.Tests.Connections.IntegrationTests.Extensions;
+using TRRabbitMQ.Core.Tests.Connections.IntegrationTests.Fixtures;
 using Xunit;
 
-namespace TRRabbitMQ.Tests.Connections.IntegrationTests
+namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests
 {
     [CollectionDefinition("BusConnectionTests", DisableParallelization = true)]
     public class BusConnectionTests : IClassFixture<BusConnectionFixture>

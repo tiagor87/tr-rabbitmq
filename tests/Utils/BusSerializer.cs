@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using TRRabbitMQ.Core.Utils;
 
-namespace TRRabbitMQ.Tests.Utils
+namespace TRRabbitMQ.Core.Tests.Utils
 {
     public class BusSerializer : IBusSerializer
     {

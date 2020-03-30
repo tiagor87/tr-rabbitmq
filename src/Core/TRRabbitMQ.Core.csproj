@@ -2,11 +2,11 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <Title>Seedwork CQRS Bus</Title>
+        <Title>TRRabbitMQ.Core</Title>
         <Authors>tiagor87@gmail.com</Authors>
-        <Description>Package to use CQRS pattern with Message Queue</Description>
-        <PackageProjectUrl>https://github.com/tiagor87/Seedwork.CQRS.Bus</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/tiagor87/Seedwork.CQRS.Bus</RepositoryUrl>
+        <Description>Package to use Message Queue</Description>
+        <PackageProjectUrl>https://github.com/tiagor87/tr-rabbitmq</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/tiagor87/tr-rabbitmq</RepositoryUrl>
         <ProjectGuid>{1F8672F0-60FD-4CA1-ACF4-F6280A25BAC0}</ProjectGuid>
         <DebugType>Full</DebugType>
     </PropertyGroup>

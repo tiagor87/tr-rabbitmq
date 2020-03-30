@@ -1,13 +1,12 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using TRRabbitMQ.Core.Connections;
 using TRRabbitMQ.Core.Models;
 using TRRabbitMQ.Core.Options;
+using TRRabbitMQ.Core.Tests.Utils;
 using TRRabbitMQ.Core.Utils;
-using TRRabbitMQ.Tests.Utils;
 
-namespace TRRabbitMQ.Tests.Connections.IntegrationTests.Fixtures
+namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests.Fixtures
 {
     public class BusConnectionFixture : IDisposable
     {
@@ -24,7 +23,7 @@ namespace TRRabbitMQ.Tests.Connections.IntegrationTests.Fixtures
                 .AddSingleton(BusConnectionString.Create("amqp://guest:guest@localhost/"))
                 .AddSingleton<IBusSerializer, BusSerializer>()
                 .AddSingleton<BusConnection>()
-                .AddSingleton(Options.Create(BusOptions))
+                .AddSingleton(Microsoft.Extensions.Options.Options.Create(BusOptions))
                 .BuildServiceProvider();
         }
 

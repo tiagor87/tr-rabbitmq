@@ -3,7 +3,7 @@ using FluentAssertions;
 using TRRabbitMQ.Core.Models;
 using Xunit;
 
-namespace TRRabbitMQ.Tests.Models
+namespace TRRabbitMQ.Core.Tests.Models
 {
     public class BusConnectionStringTests
     {

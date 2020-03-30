@@ -2,7 +2,7 @@ using FluentAssertions;
 using TRRabbitMQ.Core.Models.Enums;
 using Xunit;
 
-namespace TRRabbitMQ.Tests.Models.Enums
+namespace TRRabbitMQ.Core.Tests.Models.Enums
 {
     public class ExchangeTypeTests
     {
