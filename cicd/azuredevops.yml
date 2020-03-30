@@ -1,7 +1,7 @@
-﻿name: $(Version_Major).$(Version_Minor)$(rev:.r)
+name: $(Version_Major).$(Version_Minor)$(rev:.r)
 
 variables:
-  Sonar_ProjectKey: 'tiagor87_tr-domaindriven'
+  Sonar_ProjectKey: 'tiagor87_tr-rabbitmq'
   Version_Major: '0'
   Version_Minor: '0'
 
@@ -18,10 +18,11 @@ stages:
             - docker
         steps:
           - task: Bash@3
-              displayName: 'Run RabbitMQ container'
-              inputs:
-                targetType: 'inline'
-                script: 'docker run -p 5672:5672 rabbitmq:alpine'
+            displayName: 'Run RabbitMQ container'
+            inputs:
+              targetType: 'inline'
+              script: 'docker run -p 5672:5672 rabbitmq:alpine'
+
           - task: SonarSource.sonarcloud.14d9cde6-c1da-4d55-aa01-2965cd301255.SonarCloudPrepare@1
             displayName: 'Prepare analysis on SonarCloud'
             inputs:
