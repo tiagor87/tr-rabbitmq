@@ -20,7 +20,7 @@ stages:
             displayName: 'Run RabbitMQ container'
             inputs:
               targetType: 'inline'
-              script: 'docker run -p 5672:5672 rabbitmq:alpine'
+              script: 'docker run -p 5672:5672 -d rabbitmq:alpine'
 
           - task: SonarSource.sonarcloud.14d9cde6-c1da-4d55-aa01-2965cd301255.SonarCloudPrepare@1
             displayName: 'Prepare analysis on SonarCloud'
