@@ -15,7 +15,6 @@ stages:
           vmImage: ubuntu-latest
           demands:
             - java
-            - docker
         steps:
           - task: Bash@3
             displayName: 'Run RabbitMQ container'
