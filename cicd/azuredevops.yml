@@ -32,7 +32,9 @@ stages:
               projectVersion: '$(Build.BuildNumber)'
               extraProperties: |
                 sonar.exclusions=**/*test*
-                sonar.exclusions=**/lib/**
+                sonar.exclusions=**/lib/**,**/obj/**,**/*.dll
+                sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/tests/**/coverage.opencover.xml
+                sonar.cs.vstest.reportsPaths=$(Agent.TempDirectory)/*.trx
 
           - task: DotNetCoreCLI@2
             displayName: Restore
