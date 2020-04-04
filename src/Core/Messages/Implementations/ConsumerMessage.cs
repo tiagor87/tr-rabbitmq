@@ -14,14 +14,12 @@ namespace TRRabbitMQ.Core.Messages.Implementations
             MessageOptions options,
             byte[] body,
             int attemptCount,
-            Action<IConsumerMessage> onSuccess,
-            Action<IConsumerMessage> onRetry,
-            Action<IConsumerMessage> onFail)
+            (Action<IConsumerMessage> onSuccess, Action<IConsumerMessage> onRetry, Action<IConsumerMessage> onFail) actions)
         {
             Body = body;
-            _onSuccess = onSuccess;
-            _onRetry = onRetry;
-            _onFail = onFail;
+            _onSuccess = actions.onSuccess;
+            _onRetry = actions.onRetry;
+            _onFail = actions.onFail;
             Options = options;
             AttemptCount = attemptCount;
         }

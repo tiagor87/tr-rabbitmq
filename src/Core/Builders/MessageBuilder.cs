@@ -75,9 +75,7 @@ namespace TRRabbitMQ.Core.Builders
                 options,
                 _event.Body,
                 _attemptCount,
-                _onSuccess,
-                _onRetry,
-                _onFail,
+                (_onSuccess, _onRetry, _onFail),
                 _channel,
                 _event);
         }

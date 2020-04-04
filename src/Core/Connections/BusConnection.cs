@@ -40,6 +40,7 @@ namespace TRRabbitMQ.Core.Connections
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private IConnection _consumerConnection;
         private IConnection _publisherConnection;
+        private List<Task> _tasks = new List<Task>();
 
         public BusConnection(IConnectionFactory connectionFactory,
             IBusSerializer serializer,
@@ -139,20 +140,9 @@ namespace TRRabbitMQ.Core.Connections
             Declare(exchange, queue, routingKey);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
-
-            var tasks = new List<Task>(_options.Value.ConsumerMaxParallelTasks);
             consumer.Received += (sender, args) =>
             {
-                while (tasks.Count == tasks.Capacity)
-                {
-                    lock (_sync)
-                    {
-                        tasks.RemoveAll(x => x.IsCompleted || x.IsCanceled || x.IsFaulted);
-                    }
-
-                    Thread.Sleep(100);
-                }
-
+                WaitForFreeSlots();
                 try
                 {
                     var task = Task.Run(async () =>
@@ -198,7 +188,7 @@ namespace TRRabbitMQ.Core.Connections
                     });
                     lock (_sync)
                     {
-                        tasks.Add(task);
+                        _tasks.Add(task);
                     }
                 }
                 catch (Exception ex)
@@ -212,7 +202,7 @@ namespace TRRabbitMQ.Core.Connections
             };
 
             var consumerTag = channel.BasicConsume(queue.Name.Value, false, consumer);
-            _consumers.GetOrAdd(consumerTag, (channel, consumer, tasks));
+            _consumers.GetOrAdd(consumerTag, (channel, consumer, _tasks));
         }
 
         public void Publish(IPublishMessage publishMessage)
@@ -254,6 +244,19 @@ namespace TRRabbitMQ.Core.Connections
         ~BusConnection()
         {
             Dispose(false);
+        }
+
+        private void WaitForFreeSlots()
+        {
+            while (_tasks.Count >= _options.Value.ConsumerMaxParallelTasks)
+            {
+                lock (_sync)
+                {
+                    _tasks.RemoveAll(x => x.IsCompleted || x.IsCanceled || x.IsFaulted);
+                }
+
+                Thread.Sleep(100);
+            }
         }
 
         private static IConnectionFactory GetConnectionFactory(Uri connectionString)

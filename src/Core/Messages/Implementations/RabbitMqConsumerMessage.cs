@@ -11,11 +11,9 @@ namespace TRRabbitMQ.Core.Messages.Implementations
             MessageOptions options,
             byte[] body,
             int attemptCount,
-            Action<IConsumerMessage> onSuccess,
-            Action<IConsumerMessage> onRetry,
-            Action<IConsumerMessage> onFail,
+            (Action<IConsumerMessage> onSuccess, Action<IConsumerMessage> onRetry, Action<IConsumerMessage> onFail) actions,
             IModel channel,
-            BasicDeliverEventArgs @event) : base(options, body, attemptCount, onSuccess, onRetry, onFail)
+            BasicDeliverEventArgs @event) : base(options, body, attemptCount, actions)
         {
             Channel = channel;
             Event = @event;
