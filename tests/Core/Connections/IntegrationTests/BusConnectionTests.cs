@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using TRRabbitMQ.Core.Consumers;
 using TRRabbitMQ.Core.Messages;
 using TRRabbitMQ.Core.Messages.Implementations;
 using TRRabbitMQ.Core.Models;
@@ -119,7 +120,10 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests
             };
 
             _connectionFixture.Connection.Publish(message);
+            
+            autoResetEvent.WaitOne();
 
+            /*
             _connectionFixture.Connection.Subscribe<string>(exchange, queue, routingKey, 1, (scope, m) =>
             {
                 autoResetEvent.Set();
@@ -129,10 +133,12 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests
             autoResetEvent.WaitOne(); // Wait for subscribe to execute.
 
             autoResetEvent.WaitOne(); // Wait for failed message publishing.
+            */
 
             var failedQueue = Queue.Create($"{queue.Name.Value}-failed");
 
             _connectionFixture.Connection.MessageCount(failedQueue).Should().Be(1);
+            
         }
 
         [Fact]
@@ -154,7 +160,10 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests
             };
 
             _connectionFixture.Connection.Publish(exchange, queue, routingKey, notification);
+            
+            autoResetEvent.WaitOne();
 
+            /*
             _connectionFixture.Connection.Subscribe<string>(exchange, queue, routingKey, 1, (scope, message) =>
             {
                 autoResetEvent.Set();
@@ -164,6 +173,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests
             autoResetEvent.WaitOne(); // Wait for subscribe to execute.
 
             autoResetEvent.WaitOne(); // Wait for retry message publishing.
+            */
 
             var retryQueue = Queue.Create($"{queue.Name.Value}-retry");
 
@@ -184,6 +194,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests
             IServiceScope callbackScope = null;
             IConsumerMessage callbackMessage = null;
 
+            /*
             var autoResetEvent = new AutoResetEvent(false);
 
             _connectionFixture.Connection.Subscribe<string>(exchange, queue, routingKey, 1, (scope, message) =>
@@ -196,9 +207,28 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests
             });
 
             autoResetEvent.WaitOne();
-
+            */
             callbackScope.Should().NotBeNull();
             callbackMessage.GetData<string>().Should().Be(notification);
+        }
+        
+        [Fact]
+        public void Test()
+        {
+            var exchange = Exchange.Create("seedwork-cqrs-bus.integration-tests", ExchangeType.Direct);
+            var queue = Queue.Create($"seedwork-cqrs-bus.integration-tests.queue-{Guid.NewGuid()}")
+                .WithAutoDelete();
+            var routingKey = RoutingKey.Create(queue.Name.Value);
+            const string notification = "Notification message";
+            
+            _connectionFixture.Connection.Subscribe(new ConsumerOptions<string>(exchange, queue, 1, true, routingKey));
+            
+            var autoResetEvent = new AutoResetEvent(false);
+            _connectionFixture.Connection.PublishSuccessed += _ => autoResetEvent.Set(); 
+            _connectionFixture.Connection.Publish(exchange, queue, routingKey, notification);
+            autoResetEvent.WaitOne();
+            Thread.Sleep(1000);
+            TestHandler.ReceivedMessage.Should().Be(notification);
         }
     }
 }

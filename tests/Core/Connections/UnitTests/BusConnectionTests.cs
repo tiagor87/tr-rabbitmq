@@ -143,6 +143,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 .Callback(() => autoResetEvent.Set())
                 .Verifiable();
 
+            /*
             _busConnection.Subscribe<string>(
                 exchange,
                 queue,
@@ -151,6 +152,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 async (scope, @event) => await @event.GetDataAsync<string>());
 
             autoResetEvent.WaitOne(TimeSpan.FromSeconds(5));
+            */
 
             _loggerMock.Verify(x => x.WriteException(It.IsAny<string>(), It.IsAny<Exception>(),
                 It.IsAny<KeyValuePair<string, object>[]>()));
@@ -449,6 +451,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 .Returns(Guid.NewGuid().ToString());
 
             var isExecuted = false;
+            /*
             var autoResetEvent = new AutoResetEvent(false);
             _busConnection.Subscribe<string>(exchange, queue, routingKey, 10, (scope, @event) =>
             {
@@ -461,7 +464,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 .Verifiable();
 
             autoResetEvent.WaitOne(TimeSpan.FromSeconds(30));
-
+            */
             isExecuted.Should().BeTrue();
             _channelMock.Verify(x => x.BasicQos(0, 10, false), Times.Once());
             _channelMock.Verify(x => x.BasicConsume(
@@ -516,6 +519,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 .Callback((ulong tag, bool multiple) => autoResetEvent.Set())
                 .Verifiable();
 
+            /*
             _busConnection.Subscribe<string>(
                 exchange,
                 queue,
@@ -524,7 +528,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 (scope, @event) => throw new Exception());
 
             autoResetEvent.WaitOne(TimeSpan.FromSeconds(5));
-
+            */
             _channelMock.Verify(x => x.BasicAck(deliveryTag, false), Times.Once());
         }
 
@@ -573,7 +577,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
             _publishBatchMock.Setup(x => x.Publish())
                 .Callback(() => autoResetEvent.Set())
                 .Verifiable();
-
+            /*
             _busConnection.Subscribe<string>(
                 exchange,
                 queue,
@@ -582,7 +586,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 (scope, @event) => throw new Exception());
 
             autoResetEvent.WaitOne(TimeSpan.FromSeconds(5));
-
+            */
             _publishBatchMock.VerifyAll();
             _channelMock.Verify(x => x.QueueDeclare(
                 It.Is((string y) => y.EndsWith("-retry")),
@@ -657,6 +661,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                     autoResetEvent.Set())
                 .Verifiable();
 
+            /*
             _busConnection.Subscribe<string>(
                 exchange,
                 queue,
@@ -665,7 +670,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.UnitTests
                 (scope, @event) => throw new Exception());
 
             autoResetEvent.WaitOne(TimeSpan.FromSeconds(30));
-
+            */
             _loggerMock.Verify(x => x.WriteException(It.IsAny<string>(), It.IsAny<Exception>(),
                 It.IsAny<KeyValuePair<string, object>[]>()));
         }

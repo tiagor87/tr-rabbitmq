@@ -1,6 +1,8 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using TRRabbitMQ.Core.Connections;
+using TRRabbitMQ.Core.Consumers;
 using TRRabbitMQ.Core.Models;
 using TRRabbitMQ.Core.Options;
 using TRRabbitMQ.Core.Tests.Utils;
@@ -24,6 +26,7 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests.Fixtures
                 .AddSingleton<IBusSerializer, BusSerializer>()
                 .AddSingleton<BusConnection>()
                 .AddSingleton(Microsoft.Extensions.Options.Options.Create(BusOptions))
+                .AddScoped<IConsumerHandler<string>, TestHandler>()
                 .BuildServiceProvider();
         }
 
@@ -33,5 +36,16 @@ namespace TRRabbitMQ.Core.Tests.Connections.IntegrationTests.Fixtures
         {
             _serviceProvider.Dispose();
         }
+    }
+
+    public class TestHandler : IConsumerHandler<string>
+    {
+        public Task ExecuteAsync(string message)
+        {
+            ReceivedMessage = message;
+            return Task.CompletedTask;
+        }
+        
+        public static string ReceivedMessage { get; private set; }
     }
 }

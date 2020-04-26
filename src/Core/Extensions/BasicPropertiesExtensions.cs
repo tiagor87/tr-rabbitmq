@@ -13,6 +13,26 @@ namespace TRRabbitMQ.Core.Extensions
             basicProperties.Headers.Add("MaxAttempts", consumerMessage.Options.MaxAttempts);
             basicProperties.Headers.Add("AttemptCount", consumerMessage.AttemptCount);
         }
+
+        internal static int GetAttemptCount(this IBasicProperties basicProperties, int defaultValue = 0)
+        {
+            if (basicProperties.Headers.TryGetValue("AttemptCount", out var value))
+            {
+                return (int) value;
+            }
+
+            return defaultValue;
+        }
+        
+        internal static int GetMaxAttempts(this IBasicProperties basicProperties, int defaultValue = 5)
+        {
+            if (basicProperties.Headers.TryGetValue("MaxAttempts", out var value))
+            {
+                return (int) value;
+            }
+
+            return defaultValue;
+        }
         
     }
     

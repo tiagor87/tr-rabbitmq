@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -13,6 +14,7 @@ using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using TRRabbitMQ.Core.Builders;
+using TRRabbitMQ.Core.Consumers;
 using TRRabbitMQ.Core.Extensions;
 using TRRabbitMQ.Core.Messages;
 using TRRabbitMQ.Core.Messages.Implementations;
@@ -40,7 +42,6 @@ namespace TRRabbitMQ.Core.Connections
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private IConnection _consumerConnection;
         private IConnection _publisherConnection;
-        private List<Task> _tasks = new List<Task>();
 
         public BusConnection(IConnectionFactory connectionFactory,
             IBusSerializer serializer,
@@ -58,6 +59,7 @@ namespace TRRabbitMQ.Core.Connections
                 new BufferList<BatchItem>(_options.Value.PublisherBufferSize,
                     TimeSpan.FromMilliseconds(_options.Value.PublisherBufferTtlInMilliseconds));
             _publisherBuffer.Cleared += PublishBufferOnCleared;
+            ConsumerController.Init(_options.Value.ConsumerMaxParallelTasks);
         }
 
         public BusConnection(BusConnectionString connectionString,
@@ -132,77 +134,12 @@ namespace TRRabbitMQ.Core.Connections
             }
         }
 
-        public void Subscribe<T>(Exchange exchange, Queue queue, RoutingKey routingKey, ushort prefetchCount,
-            Func<IServiceScope, IConsumerMessage, Task> action, bool autoAck = true)
+        public void Subscribe<T>(IConsumerOptions<T> options)
         {
+            Declare(options.Exchange, options.Queue, options.RoutingKeys.ToArray());
             var channel = ConsumerConnection.CreateModel();
-            channel.BasicQos(0, prefetchCount, false);
-            Declare(exchange, queue, routingKey);
-
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.Received += (sender, args) =>
-            {
-                WaitForFreeSlots();
-                try
-                {
-                    var task = Task.Run(async () =>
-                    {
-                        var builder = new MessageBuilder(channel, _serializer);
-                        var message = builder
-                            .SetOnSuccess(CompleteMessage)
-                            .SetOnRetry(RetryMessage)
-                            .SetOnFail(FailMessage)
-                            .SetExchange(exchange)
-                            .SetQueue(queue)
-                            .SetEvent(args)
-                            .Build();
-                        try
-                        {
-                            using (var scope = _serviceScopeFactory.CreateScope())
-                            {
-                                try
-                                {
-                                    await action.Invoke(scope, message);
-                                    if (autoAck) message.Success();
-                                }
-                                catch (SerializationException exception)
-                                {
-                                    _logger?.WriteException(nameof(Subscribe), exception,
-                                        new KeyValuePair<string, object>("Event", Encoding.UTF8.GetString(args.Body)));
-                                    FailMessage(message);
-                                    channel.BasicNack(args.DeliveryTag, false, false);
-                                }
-                                catch (Exception exception)
-                                {
-                                    message.Fail(exception);
-                                }
-                            }
-                        }
-                        catch (Exception exception)
-                        {
-                            _logger?.WriteException(nameof(Subscribe), exception,
-                                new KeyValuePair<string, object>("Event", Encoding.UTF8.GetString(args.Body)));
-                            FailMessage(message);
-                            channel.BasicNack(args.DeliveryTag, false, false);
-                        }
-                    });
-                    lock (_sync)
-                    {
-                        _tasks.Add(task);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger?.WriteException(typeof(T).Name, ex,
-                        new KeyValuePair<string, object>("args", args));
-                    channel.BasicNack(args.DeliveryTag, false, true);
-                }
-
-                return Task.CompletedTask;
-            };
-
-            var consumerTag = channel.BasicConsume(queue.Name.Value, false, consumer);
-            _consumers.GetOrAdd(consumerTag, (channel, consumer, _tasks));
+            var consumer = new Consumer<T>(this, options, channel, _serializer, _logger, _serviceScopeFactory);
+            consumer.Subscribe();
         }
 
         public void Publish(IPublishMessage publishMessage)
@@ -246,19 +183,6 @@ namespace TRRabbitMQ.Core.Connections
             Dispose(false);
         }
 
-        private void WaitForFreeSlots()
-        {
-            while (_tasks.Count >= _options.Value.ConsumerMaxParallelTasks)
-            {
-                lock (_sync)
-                {
-                    _tasks.RemoveAll(x => x.IsCompleted || x.IsCanceled || x.IsFaulted);
-                }
-
-                Thread.Sleep(100);
-            }
-        }
-
         private static IConnectionFactory GetConnectionFactory(Uri connectionString)
         {
             return new ConnectionFactory
@@ -270,31 +194,6 @@ namespace TRRabbitMQ.Core.Connections
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
                 DispatchConsumersAsync = true
             };
-        }
-
-        private void CompleteMessage(IConsumerMessage consumerMessage)
-        {
-            var message = consumerMessage as IRabbitMqConsumerMessage;
-            message?.Channel.BasicAck(message.Event.DeliveryTag, false);
-        }
-
-        private void RetryMessage(IConsumerMessage consumerMessage)
-        {
-            var retryQueue = consumerMessage.Options.Queue
-                .CreateRetryQueue(TimeSpan.FromMinutes(1));
-            var retryRoutingKey = RoutingKey.Create(retryQueue.Name.Value);
-            Publish(Exchange.Default, retryQueue, retryRoutingKey, consumerMessage);
-            consumerMessage.Success();
-        }
-
-        private void FailMessage(IConsumerMessage message)
-        {
-            var failedQueue = message.Options.Queue
-                .CreateFailedQueue();
-            var failedRoutingKey = RoutingKey.Create(failedQueue.Name.Value);
-            Publish(Exchange.Default, failedQueue, failedRoutingKey, message);
-            message.Success();
-            _logger?.WriteException(nameof(FailMessage), message.Error, new KeyValuePair<string, object>("Event", message));
         }
 
         private void PublishBufferOnCleared(IEnumerable<BatchItem> removedItems)

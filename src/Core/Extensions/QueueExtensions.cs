@@ -32,7 +32,7 @@ namespace TRRabbitMQ.Core.Extensions
 
         internal static Queue CreateRetryQueue(this Queue queue, TimeSpan ttl)
         {
-            return Queue.Create($"{queue.Name.Value}-retry")
+            return Queue.Create($"{queue.Name.Value}-retry-{ttl.TotalMilliseconds}ms")
                 .WithDurability(Durability.Durable)
                 .MessagesExpiresIn(ttl)
                 .SendExpiredMessagesTo(Exchange.Default, RoutingKey.Create(queue.Name.Value));
